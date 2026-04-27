@@ -51,6 +51,7 @@ type Product = BaseRecord & {
   location: string;
   images: string[];
   status: string;
+  rejectionReason?: string | null;
   isUrgent: boolean;
   isFeatured: boolean;
   isGraduationSeason: boolean;

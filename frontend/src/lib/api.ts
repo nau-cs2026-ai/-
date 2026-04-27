@@ -26,6 +26,15 @@ export const apiService = {
     return res.json() as Promise<ApiResponse<{ token: string; user: User }>>;
   },
 
+  async createAdmin(name: string, email: string, password: string): Promise<ApiResponse<{ user: User }>> {
+    const res = await fetch(`${API_BASE_URL}/api/auth/admin/signup`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ name, email, password, role: 'admin' }),
+    });
+    return res.json() as Promise<ApiResponse<{ user: User }>>;
+  },
+
   async getMe(): Promise<ApiResponse<User>> {
     const res = await fetch(`${API_BASE_URL}/api/auth/me`, { headers: getAuthHeaders() });
     return res.json() as Promise<ApiResponse<User>>;

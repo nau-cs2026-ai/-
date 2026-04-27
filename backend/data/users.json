@@ -170,5 +170,47 @@
     "id": "54a711b5-4056-4e80-8fb8-524fdd0ebc4d",
     "createdAt": "2026-03-30T03:34:18.071Z",
     "updatedAt": "2026-03-30T03:34:18.071Z"
+  },
+  {
+    "name": "简",
+    "email": "1817978472@qq.com",
+    "password": "$2b$12$LErDW/EPG3pRvr7gK.2X3ezRBMmCd3b0Ck85MKG0kwQ0Ut8CUJwH2",
+    "isVerified": false,
+    "creditScore": 100,
+    "completedDeals": 0,
+    "positiveRate": "100",
+    "role": "user",
+    "isBanned": false,
+    "id": "218bc45d-4b4e-4749-aa7c-daff5185d67e",
+    "createdAt": "2026-04-13T02:25:18.671Z",
+    "updatedAt": "2026-04-13T02:25:18.671Z"
+  },
+  {
+    "name": "简",
+    "email": "1817978472@qq.com",
+    "password": "$2b$12$ZPUggRJ.RwFQBf314etqLO1Vdlr2LhpZvIy82mL11GbTWqqM6xixO",
+    "isVerified": false,
+    "creditScore": 100,
+    "completedDeals": 0,
+    "positiveRate": "100",
+    "role": "user",
+    "isBanned": false,
+    "id": "12bd51b6-9199-425e-bece-c340bc71e155",
+    "createdAt": "2026-04-20T00:50:35.364Z",
+    "updatedAt": "2026-04-20T00:50:35.364Z"
+  },
+  {
+    "name": "简",
+    "email": "1817978472@qq.com",
+    "password": "$2b$12$L.4NpbdBbwufJesL29BiHeDYF95sxSc2IOWyy.YdIrBc3AkvDrRJG",
+    "isVerified": false,
+    "creditScore": 100,
+    "completedDeals": 0,
+    "positiveRate": "100",
+    "role": "user",
+    "isBanned": false,
+    "id": "404fc0cc-9573-4e10-a01e-dfde9e1b4e1a",
+    "createdAt": "2026-04-27T03:02:04.454Z",
+    "updatedAt": "2026-04-27T03:02:04.454Z"
   }
 ]

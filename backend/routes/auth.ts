@@ -15,6 +15,13 @@ const signupSchema = z.object({
   confirmPassword: z.string(),
 }).refine(d => d.password === d.confirmPassword, { message: '两次密码不一致', path: ['confirmPassword'] });
 
+const adminSignupSchema = z.object({
+  name: z.string().min(1, '姓名不能为空'),
+  email: z.string().email('邮箱格式不正确'),
+  password: z.string().min(6, '密码至少6位'),
+  role: z.enum(['admin']).default('admin'),
+}).refine(d => d.password.length >= 6, { message: '密码至少6位' });
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -50,6 +57,46 @@ router.post('/signup', async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error('注册错误:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+router.post('/admin/signup', authenticateJWT, async (req: AuthRequest, res: Response) => {
+  try {
+    console.log('收到管理员创建请求:', req.body);
+    
+    if (req.user!.role !== 'admin') {
+      return res.status(403).json({ success: false, message: '只有管理员可以创建新管理员' });
+    }
+    
+    const parsed = adminSignupSchema.safeParse(req.body);
+    if (!parsed.success) {
+      console.log('管理员创建验证失败:', parsed.error.errors);
+      return res.status(400).json({ success: false, message: parsed.error.errors[0].message });
+    }
+    
+    const { name, email, password } = parsed.data;
+    console.log('查找用户:', email);
+    const existing = await usersRepository.findByEmail(email);
+    if (existing) {
+      console.log('用户已存在');
+      return res.status(409).json({ success: false, message: '该邮箱已被注册' });
+    }
+    
+    console.log('创建新管理员:', name);
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const user = await usersRepository.create({ name, email, password: hashedPassword, role: 'admin', isVerified: true });
+    console.log('管理员创建成功:', user.id);
+    
+    return res.status(201).json({
+      success: true,
+      data: {
+        user: { id: user.id, name: user.name, email: user.email, role: user.role, creditScore: user.creditScore, isVerified: user.isVerified },
+      },
+      message: '管理员创建成功'
+    });
+  } catch (err) {
+    console.error('管理员创建错误:', err);
     return res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
@@ -114,7 +161,6 @@ router.post('/verify-student', authenticateJWT, async (req: AuthRequest, res: Re
   try {
     const { studentId } = req.body;
     if (!studentId) return res.status(400).json({ success: false, message: '请提供学号' });
-    // Simulate student ID verification
     const user = await usersRepository.update(req.user!.id, { studentId, isVerified: true });
     return res.json({ success: true, data: user, message: '学号认证成功' });
   } catch (err) {

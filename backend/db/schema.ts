@@ -35,6 +35,7 @@ export const products = pgTable('Products', {
   location: text('location').notNull(),
   images: text('images').array().default([]).notNull(),
   status: text('status').default('pending').notNull(), // pending|approved|rejected|sold|expired
+  rejectionReason: text('rejection_reason'), // 拒绝原因
   isUrgent: boolean('is_urgent').default(false).notNull(),
   isFeatured: boolean('is_featured').default(false).notNull(),
   isGraduationSeason: boolean('is_graduation_season').default(false).notNull(),

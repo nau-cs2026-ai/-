@@ -152,6 +152,13 @@ function Login() {
             </Link>
           </p>
 
+          <p className="text-center text-sm text-[#6B7280] mt-4">
+            管理员登录？{' '}
+            <Link to="/admin/login" className="text-[#1E3A5F] font-semibold hover:underline">
+              进入管理后台
+            </Link>
+          </p>
+
           <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-xl">
             <p className="text-xs text-amber-800 text-center">
               🔒 仅限本校认证师生使用 · 安全可信赖

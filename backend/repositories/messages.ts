@@ -36,4 +36,11 @@ export const messagesRepository = {
       .set({ isRead: true } as Record<string, unknown>)
       .where(and(eq(messages.senderId, senderId), eq(messages.receiverId, receiverId)));
   },
+
+  async delete(messageId: string, userId: string): Promise<boolean> {
+    const result = await db.delete(messages)
+      .where(and(eq(messages.id, messageId), eq(messages.senderId, userId)))
+      .returning();
+    return result.length > 0;
+  },
 };

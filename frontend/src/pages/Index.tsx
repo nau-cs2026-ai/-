@@ -5,6 +5,8 @@ import { apiService } from '../lib/api';
 import { toast } from 'sonner';
 import { Toaster } from '../components/ui/sonner';
 import OmniflowBadge from '../components/custom/OmniflowBadge';
+import AdminView from '../components/custom/AdminView';
+import MessagesView from '../components/custom/MessagesView';
 import type { Product, User, Message, Order, AdminStats } from '../types';
 import { CATEGORY_LABELS, CONDITION_LABELS, CONDITION_COLORS } from '../types';
 import {
@@ -987,117 +989,6 @@ const ProductDetailView = memo(function ProductDetailView({
   );
 });
 
-const MessagesView = memo(function MessagesView({ 
-  onChat, 
-  chatPartner 
-}: {
-  onChat: (id: string, name: string) => void;
-  chatPartner: { id: string; name: string } | null;
-}) {
-  const MOCK_CHAT_LIST = [
-    { id: '1', name: '张三', lastMessage: '你好，这个还在吗？', time: '10:30', unread: 2 },
-    { id: '2', name: '李四', lastMessage: '好的，明天见面交易', time: '昨天', unread: 0 },
-    { id: '3', name: '王五', lastMessage: '谢谢，已经收到了', time: '3天前', unread: 0 },
-  ];
-  
-  return (
-    <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-2xl font-bold text-[#1A1A2E] mb-6" style={{ fontFamily: 'Sora, sans-serif' }}>
-        私信
-      </h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
-          <div className="p-4 border-b border-[#E5E7EB]">
-            <h2 className="font-semibold text-[#1A1A2E]">消息列表</h2>
-          </div>
-          <div className="divide-y divide-[#E5E7EB]">
-            {MOCK_CHAT_LIST.map(chat => (
-              <button 
-                key={chat.id} 
-                onClick={() => onChat(chat.id, chat.name)}
-                className={`w-full text-left p-4 hover:bg-[#F8F7F4] transition-all ${
-                  chatPartner?.id === chat.id ? 'bg-[#F8F7F4]' : ''
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#1E3A5F] flex items-center justify-center">
-                      <User className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-[#1A1A2E] truncate">{chat.name}</p>
-                        <span className="text-xs text-[#6B7280]">{chat.time}</span>
-                      </div>
-                      <p className="text-sm text-[#6B7280] truncate mt-1">{chat.lastMessage}</p>
-                    </div>
-                  </div>
-                  {chat.unread > 0 && (
-                    <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                      {chat.unread}
-                    </div>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        <div className="lg:col-span-2">
-          {chatPartner ? (
-            <div className="bg-white rounded-2xl border border-[#E5E7EB] h-[600px] flex flex-col">
-              <div className="p-4 border-b border-[#E5E7EB] flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#1E3A5F] flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <h2 className="font-semibold text-[#1A1A2E]">{chatPartner.name}</h2>
-                </div>
-                <button className="text-sm text-[#1E3A5F] font-medium hover:underline">查看资料</button>
-              </div>
-              <div className="flex-1 p-4 overflow-y-auto">
-                <div className="space-y-4">
-                  <div className="flex justify-start">
-                    <div className="bg-[#F8F7F4] rounded-2xl p-3 max-w-[70%]">
-                      <p className="text-[#1A1A2E]">你好，这个还在吗？</p>
-                      <p className="text-xs text-[#6B7280] mt-1">10:30</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <div className="bg-[#1E3A5F] text-white rounded-2xl p-3 max-w-[70%]">
-                      <p>在的，你什么时候方便看货？</p>
-                      <p className="text-xs mt-1 opacity-75">10:31</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 border-t border-[#E5E7EB]">
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="text" 
-                    placeholder="输入消息..." 
-                    className="flex-1 px-4 py-3 border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
-                  />
-                  <button className="bg-[#1E3A5F] hover:bg-blue-900 text-white p-3 rounded-xl transition-all">
-                    <Send className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl border border-[#E5E7EB] h-[600px] flex flex-col items-center justify-center">
-              <MessageCircle className="w-16 h-16 text-[#6B7280] mb-4" />
-              <p className="text-[#1A1A2E] font-semibold mb-2">选择一个聊天</p>
-              <p className="text-sm text-[#6B7280]">从左侧列表选择一个联系人开始聊天</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-});
-
 const ProfileView = memo(function ProfileView({ 
   user, 
   onLogout 
@@ -1357,15 +1248,21 @@ export default function Index() {
           />
         )}
         {view === 'messages' && (
-          <MessagesView 
+          <MessagesView
             onChat={(id, name) => setChatPartner({ id, name })}
             chatPartner={chatPartner}
+            currentUser={currentUser}
           />
         )}
         {view === 'profile' && (
           <ProfileView 
             user={user}
             onLogout={handleLogout}
+          />
+        )}
+        {view === 'admin' && user.role === 'admin' && (
+          <AdminView 
+            onBack={() => setView('home')}
           />
         )}
         {view === 'publish' && (

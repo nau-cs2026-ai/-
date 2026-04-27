@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { productsRepository } from '../repositories/products';
 import { authenticateJWT, AuthRequest } from '../middleware/auth';
 import { InsertProduct } from '../db/schema';
+import NotificationService from '../services/notificationService';
 
 const router = Router();
 
@@ -55,7 +56,7 @@ router.post('/', authenticateJWT, async (req: AuthRequest, res: Response) => {
       isGraduationSeason: isGraduationSeason || false,
       isbn,
       sellerId: req.user!.id,
-      status: 'approved',
+      status: 'pending',
     } as InsertProduct);
     return res.status(201).json({ success: true, data: product });
   } catch (err) {
@@ -100,6 +101,162 @@ router.get('/admin/all', authenticateJWT, async (req: AuthRequest, res: Response
     if (req.user!.role !== 'admin') return res.status(403).json({ success: false, message: '需要管理员权限' });
     const prods = await productsRepository.findAll({});
     return res.json({ success: true, data: prods });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// Admin: get pending products
+router.get('/admin/pending', authenticateJWT, async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user!.role !== 'admin') return res.status(403).json({ success: false, message: '需要管理员权限' });
+    const prods = await productsRepository.findAll({ status: 'pending' });
+    return res.json({ success: true, data: prods });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// Admin: approve product
+router.post('/admin/:id/approve', authenticateJWT, async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user!.role !== 'admin') return res.status(403).json({ success: false, message: '需要管理员权限' });
+    const product = await productsRepository.findById(req.params.id as string);
+    if (!product) return res.status(404).json({ success: false, message: '商品不存在' });
+    
+    const updated = await productsRepository.update(req.params.id as string, { status: 'approved' });
+    
+    await NotificationService.sendApprovalNotification(
+      product.sellerId,
+      product.id,
+      product.title
+    );
+    
+    return res.json({ success: true, data: updated, message: '商品已通过审核' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// Admin: reject product
+router.post('/admin/:id/reject', authenticateJWT, async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user!.role !== 'admin') return res.status(403).json({ success: false, message: '需要管理员权限' });
+    const product = await productsRepository.findById(req.params.id as string);
+    if (!product) return res.status(404).json({ success: false, message: '商品不存在' });
+    
+    const { reason } = req.body;
+    const updated = await productsRepository.update(req.params.id as string, { 
+      status: 'rejected',
+      rejectionReason: reason || '不符合发布规范'
+    });
+    
+    await NotificationService.sendRejectionNotification(
+      product.sellerId,
+      product.id,
+      product.title,
+      reason || '不符合发布规范'
+    );
+    
+    return res.json({ success: true, data: updated, message: '商品已拒绝' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// Admin: batch approve products
+router.post('/admin/batch-approve', authenticateJWT, async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user!.role !== 'admin') return res.status(403).json({ success: false, message: '需要管理员权限' });
+    const { productIds } = req.body;
+    
+    if (!Array.isArray(productIds)) {
+      return res.status(400).json({ success: false, message: '商品ID列表格式错误' });
+    }
+    
+    const results = [];
+    const sellerIds = new Set<string>();
+    
+    for (const id of productIds) {
+      try {
+        const product = await productsRepository.findById(id);
+        if (product && product.status === 'pending') {
+          const updated = await productsRepository.update(id, { status: 'approved' });
+          results.push(updated);
+          sellerIds.add(product.sellerId);
+        }
+      } catch (error) {
+        console.error(`Failed to approve product ${id}:`, error);
+      }
+    }
+    
+    await NotificationService.sendBatchApprovalNotification(
+      Array.from(sellerIds),
+      results.length
+    );
+    
+    return res.json({ success: true, data: results, message: `已批量通过 ${results.length} 个商品` });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// Admin: batch reject products
+router.post('/admin/batch-reject', authenticateJWT, async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user!.role !== 'admin') return res.status(403).json({ success: false, message: '需要管理员权限' });
+    const { productIds, reason } = req.body;
+    
+    if (!Array.isArray(productIds)) {
+      return res.status(400).json({ success: false, message: '商品ID列表格式错误' });
+    }
+    
+    const results = [];
+    const sellerIds = new Set<string>();
+    
+    for (const id of productIds) {
+      try {
+        const product = await productsRepository.findById(id);
+        if (product && product.status === 'pending') {
+          const updated = await productsRepository.update(id, { 
+            status: 'rejected',
+            rejectionReason: reason || '不符合发布规范'
+          });
+          results.push(updated);
+          sellerIds.add(product.sellerId);
+        }
+      } catch (error) {
+        console.error(`Failed to reject product ${id}:`, error);
+      }
+    }
+    
+    await NotificationService.sendBatchRejectionNotification(
+      Array.from(sellerIds),
+      results.length,
+      reason || '不符合发布规范'
+    );
+    
+    return res.json({ success: true, data: results, message: `已批量拒绝 ${results.length} 个商品` });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// Admin: get approval statistics
+router.get('/admin/stats', authenticateJWT, async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user!.role !== 'admin') return res.status(403).json({ success: false, message: '需要管理员权限' });
+    
+    const allProducts = await productsRepository.findAll({});
+    const stats = {
+      total: allProducts.length,
+      pending: allProducts.filter(p => p.status === 'pending').length,
+      approved: allProducts.filter(p => p.status === 'approved').length,
+      rejected: allProducts.filter(p => p.status === 'rejected').length,
+      sold: allProducts.filter(p => p.status === 'sold').length
+    };
+    
+    return res.json({ success: true, data: stats });
   } catch (err) {
     return res.status(500).json({ success: false, message: '服务器错误' });
   }
